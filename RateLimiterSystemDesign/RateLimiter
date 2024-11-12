@@ -1,0 +1,35 @@
+package systemDesign.rateLimiter;
+
+public class RateLimiter {
+    private int noOfTokenAvailable;
+    private int bucketSize;
+    private int numberOfRequest;
+    private long lastRefillTime;
+    private long nextRefillTime;
+    private int windowSize;
+
+    public RateLimiter(int bucketSize, int numberOfRequest, int windowSize){
+        this.bucketSize=bucketSize;
+        this.numberOfRequest=numberOfRequest;
+        this.windowSize=windowSize;
+    }
+
+    public boolean tryConsume(){
+        refill();
+        if(this.noOfTokenAvailable>0){
+            this.noOfTokenAvailable--;
+            return true;
+        }
+        return false;
+    }
+
+    public void refill(){
+        if(System.currentTimeMillis()< this.nextRefillTime){
+            return;
+        }
+
+        this.lastRefillTime=System.currentTimeMillis();
+        this.nextRefillTime=this.lastRefillTime+windowSize;
+        this.noOfTokenAvailable=Math.min(bucketSize,this.noOfTokenAvailable+numberOfRequest);
+    }
+}
