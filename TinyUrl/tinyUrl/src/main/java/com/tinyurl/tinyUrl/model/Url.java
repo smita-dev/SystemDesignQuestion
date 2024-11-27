@@ -1,10 +1,12 @@
 package com.tinyurl.tinyUrl.model;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
@@ -13,6 +15,8 @@ import java.time.LocalDateTime;
 //@Getter
 //@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@Entity
 public class Url {
     @Id
     @GeneratedValue

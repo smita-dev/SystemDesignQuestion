@@ -1,45 +1,62 @@
 package com.tinyurl.tinyUrl.service;
 
+import com.google.common.hash.Hashing;
 import com.tinyurl.tinyUrl.model.Url;
+import com.tinyurl.tinyUrl.model.UrlDTO;
 import com.tinyurl.tinyUrl.repository.UrlRepository;
 import io.micrometer.common.util.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 @Service
 public class UrlService {
+    @Autowired
     UrlRepository urlRepository;
+
     UrlService(UrlRepository urlRepository){
         this.urlRepository=urlRepository;
     }
-    public Url generateShortUrl(Url url){
+    public Url generateShortUrl(UrlDTO url){
 
-        if(StringUtils.isEmpty(url.getOriginalurl())){
-            String encodedUrl=encodeUrl(url.getOriginalurl());
+        if(StringUtils.isNotEmpty(url.getUrl())){
+            String encodedUrl=encodeUrl(url.getUrl());
             Url urlToPersist=new Url();
-            urlToPersist.setOriginalurl(url.getOriginalurl());
+            urlToPersist.setOriginalurl(url.getUrl());
             urlToPersist.setShortUrl(encodedUrl);
             urlToPersist.setCreationDate(LocalDateTime.now());
-            urlToPersist.setExpirationDate(getExpirationDate(url.getExpirationDate(),url.getCreationDate()));
-            Url responseUrl=persistShortUrl(urlToPersist);
+            urlToPersist.setExpirationDate(getExpirationDate(url.getExpirationDate(),urlToPersist.getCreationDate()));
+            return  persistShortUrl(urlToPersist);
         }
+
+        return null;
+
     }
 
     private Url persistShortUrl(Url urlToPersist) {
         return urlRepository.save(urlToPersist);
     }
 
-    private String encodeUrl(String originalurl) {
-
+    private Url getEncodedUrl(String url){
+        return urlRepository.findByShortUrl(url);
     }
 
-    private LocalDateTime getExpirationDate(LocalDateTime expirationDate, LocalDateTime creationDate) {
-        if(StringUtils.isEmpty(String.valueOf(expirationDate))){
-            return creationDate.plusHours(24);
-        }
+    private void deleteShortUrl(Url url){
+        urlRepository.delete(url);
+    }
+    private String encodeUrl(String originalurl) {
+        String encodedUrl="";
+        LocalDateTime time=LocalDateTime.now();
+        encodedUrl= Hashing.murmur3_32_fixed().hashString(originalurl.concat(time.toString()), StandardCharsets.UTF_8).toString();
+        return encodedUrl;
+    }
 
-        return expirationDate;
-        
+    private LocalDateTime getExpirationDate(String expirationDate, LocalDateTime creationDate) {
+        if(StringUtils.isEmpty(expirationDate)){
+            return creationDate.plusSeconds(1);
+        }
+        return LocalDateTime.parse(expirationDate);
     }
 }
