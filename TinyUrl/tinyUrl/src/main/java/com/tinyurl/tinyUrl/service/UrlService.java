@@ -43,7 +43,7 @@ public class UrlService {
         return urlRepository.findByShortUrl(url);
     }
 
-    private void deleteShortUrl(Url url){
+    public void deleteShortUrl(Url url){
         urlRepository.delete(url);
     }
     private String encodeUrl(String originalurl) {
@@ -55,7 +55,7 @@ public class UrlService {
 
     private LocalDateTime getExpirationDate(String expirationDate, LocalDateTime creationDate) {
         if(StringUtils.isEmpty(expirationDate)){
-            return creationDate.plusSeconds(1);
+            return creationDate.plusSeconds(60);
         }
         return LocalDateTime.parse(expirationDate);
     }

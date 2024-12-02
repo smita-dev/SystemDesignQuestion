@@ -5,13 +5,14 @@ import com.tinyurl.tinyUrl.model.UrlDTO;
 import com.tinyurl.tinyUrl.model.UrlErrorResponse;
 import com.tinyurl.tinyUrl.service.UrlService;
 import io.micrometer.common.util.StringUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
 
 @RestController
 public class UrlShorteningController {
@@ -29,19 +30,27 @@ public class UrlShorteningController {
         return new ResponseEntity<UrlErrorResponse>(urlErrorResponse,HttpStatus.OK);
     }
 
-    @GetMapping("/redirect")
-    public ResponseEntity<?> redirectShortUrl(String shortUrl){
+    @GetMapping("/{shortUrl}")
+    public ResponseEntity<?> redirectShortUrl(@PathVariable String shortUrl, HttpServletResponse response) throws IOException {
         if(StringUtils.isEmpty(shortUrl)){
             UrlErrorResponse urlErrorResponse=new UrlErrorResponse("400","Error in the requested url");
             return new ResponseEntity<UrlErrorResponse>(urlErrorResponse,HttpStatus.BAD_REQUEST);
         }
 
-        if(urlService.getEncodedUrl(shortUrl)==null){
-            UrlErrorResponse urlErrorResponse=new UrlErrorResponse("404","Url for given request not found");
+        Url urlInfo=urlService.getEncodedUrl(shortUrl);
+        if(urlInfo==null){
+            UrlErrorResponse urlErrorResponse=new UrlErrorResponse("404","Url is not present or might have expired.");
             return new ResponseEntity<UrlErrorResponse>(urlErrorResponse,HttpStatus.NOT_FOUND);
         }
 
-        return
+        if(urlInfo.getExpirationDate().isBefore(LocalDateTime.now())){
+            urlService.deleteShortUrl(urlInfo);
+            UrlErrorResponse urlErrorResponse=new UrlErrorResponse("404","Url is expired. Please try generating new one.");
+            return new ResponseEntity<UrlErrorResponse>(urlErrorResponse,HttpStatus.NOT_FOUND);
+        }
+
+        response.sendRedirect(urlInfo.getOriginalurl());
+        return null;
     }
 
 }
