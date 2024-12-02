@@ -2,10 +2,12 @@ package com.bookMyShow.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Getter
+@Setter
 public class Booking {
     private String id;
     private Show show;

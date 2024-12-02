@@ -35,11 +35,11 @@ public class UrlService {
 
     }
 
-    private Url persistShortUrl(Url urlToPersist) {
+    public Url persistShortUrl(Url urlToPersist) {
         return urlRepository.save(urlToPersist);
     }
 
-    private Url getEncodedUrl(String url){
+    public Url getEncodedUrl(String url){
         return urlRepository.findByShortUrl(url);
     }
 
